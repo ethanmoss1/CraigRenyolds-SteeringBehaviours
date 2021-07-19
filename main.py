@@ -7,7 +7,7 @@ from sys import path
 import pygame
 import random
 from random import randint
-from Vehicle import Vehicle
+from vehicle import Vehicle
 from target import Target
 from path import Path as PathFollow
 
