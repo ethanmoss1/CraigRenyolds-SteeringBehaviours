@@ -1,4 +1,4 @@
-# CraigRenyolds-SteeringBehaviours
+# CraigReynolds-SteeringBehaviours
 Creating an autonomous vehicle based on the rules by Craig W. Reynolds 
 based on the paper Steering Behaviors For Autonomous Characters written by Craig W. Reynolds.
 
