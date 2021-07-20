@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 
-
 # Import files and libs
 from obstacles import Obstacles
-from sys import path
 import pygame
-import random
 from random import randint
 from vehicle import Vehicle
 from target import Target
@@ -41,10 +38,14 @@ def events():
 attacker = Vehicle(screen, WIDTH / 2, HEIGHT / 2)
 target = Vehicle(screen, WIDTH / 4, HEIGHT / 4)
 
+
+# attacker.get_vector(test)
+
 while running:
     running = events()
     ###########################################################################
     # YOUR CODE HERE:
+
     steering = attacker.pursue_sine_law(target)
     attacker.update(steering)
 
@@ -56,6 +57,6 @@ while running:
 
     ###########################################################################
     pygame.display.flip()
-    
+
 # be friendly, always quit!
 pygame.quit()
