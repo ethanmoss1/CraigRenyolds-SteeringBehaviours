@@ -38,24 +38,23 @@ def events():
 
 
 # initalise classes
-boids = []
-boid = Vehicle(screen, randint(0, WIDTH), randint(0, HEIGHT), WIDTH, HEIGHT)
-boid.colour = (0, 255, 0)
-follow = PathFollow(screen, points=[pygame.Vector2(200, 200), pygame.Vector2(
-    200, 800), pygame.Vector2(1400, 800), pygame.Vector2(1400, 200), pygame.Vector2(200, 200)])
-
-boids.append(boid)
+attacker = Vehicle(screen, WIDTH / 2, HEIGHT / 2)
+target = Vehicle(screen, WIDTH / 4, HEIGHT / 4)
 
 while running:
+    running = events()
     ###########################################################################
     # YOUR CODE HERE:
+    steering = attacker.pursue_sine_law(target)
+    attacker.update(steering)
 
-    for boid in boids:
-        steering = boid.follow_path(follow)
-        boid.update(steering, )
+    steering = target.wander(True)
+    target.update(steering)
+
+    if attacker.pos.distance_to(target.pos) < target.radius:
+        target.reset()
 
     ###########################################################################
-    running = events()
     pygame.display.flip()
     
 # be friendly, always quit!
