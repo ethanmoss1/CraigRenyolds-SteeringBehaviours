@@ -3,6 +3,8 @@ import math
 from random import randint
 from random import random
 from pygame import Vector2
+from obstacles import Obstacles
+from path import Path as PathFollow
 
 
 class Vehicle():
@@ -103,8 +105,7 @@ class Vehicle():
 
         if wrap_around:
             self.wrap_around()
-
-        self.draw()  # velocity=True, acceleration=True)
+        self.draw(acceleration=True)  # velocity=True, acceleration=True)
 
     def get_vector_pos(self, obj):
         """Return a Vector if given Vector or Vehicle Position"""
@@ -113,16 +114,18 @@ class Vehicle():
         elif isinstance(obj, Vector2):
             return obj
         else:
-            raise TypeError("Invalid Type, Use vehicle or pygame Vector2")
+            raise TypeError(
+                f"Invalid Type, Use vehicle or pygame Vector2, got {type(obj)}")
 
     def check_type_vehicle(self, obj):
         """Raise TypeError if not a Vehicle"""
         if not isinstance(obj, Vehicle):
-            raise TypeError("Incorrect target type: Need Vehicle")
+            raise TypeError(
+                f"Incorrect target type: Need Vehicle, got {type(obj)}")
 
     def seek(self, target):
         """Seeks given target ( Vector2 or Vehicle )"""
-        self.check_type_vehicle(target)
+        target = self.get_vector_pos(target)
         desired_vel = target - self.pos
         desired_vel.scale_to_length(self.max_spd)
         steering = desired_vel - self.vel
@@ -132,7 +135,6 @@ class Vehicle():
         """Return a steering force that flees from given target
         ( Vector2 or Vehicle )"""
         target = self.get_vector_pos(target)
-
         undesired_vel = target - self.pos
         undesired_vel.scale_to_length(self.max_spd)
         steering = -undesired_vel - self.vel
@@ -141,7 +143,6 @@ class Vehicle():
     def pursue(self, target, draw=False):
         """Returns a steering force pursuing a target"""
         self.check_type_vehicle(target)
-
         future_amt = self.pos.distance_to(target.pos)
         speed_ratio = target.vel.magnitude() / self.max_spd
         future_amt = future_amt * speed_ratio
@@ -156,7 +157,7 @@ class Vehicle():
 
     def pursue_sine_law(self, target, draw=False):
         """Returns a steering force pursuing a target, uses Sine Law"""
-        target = self.get_vector_pos(target)
+        self.check_type_vehicle(target)
         speed_ratio = target.vel.magnitude() / self.max_spd
         desired = self.pos - target.pos
         target_angle = math.radians(target.vel.angle_to(desired))
@@ -247,6 +248,8 @@ class Vehicle():
 
     def follow_path(self, path_object, draw=False):
         """NOT FULLY IMPLEMENTED - Needs redoing as its a bit iffy"""
+        if not isinstance(path_object, PathFollow):
+            raise TypeError(f"Expected a Path object, got {type(path_object)}")
         distance = 1_000_000
         future_pos = Vector2(self.vel)
         future_pos.scale_to_length(200)
@@ -308,8 +311,82 @@ class Vehicle():
         ab *= dot_product
         return start + ab
 
-    def obstacle_avoidence(self, obstacles):
-        return NotImplementedError()
+    def obstacle_avoidence(self, obstacles, draw=False):
+        if not isinstance(obstacles, Obstacles) and not isinstance(obstacles, list):
+            raise TypeError("Expected Obstacal Object or list of Obstacles")
+        elif isinstance(obstacles, Obstacles):
+            obstacles = [obstacles]
+
+        max_point = Vector2(self.vel)
+        max_point.scale_to_length(self.slowing_distance + self.radius * 2)
+        max_point += self.pos
+
+        closest = self.slowing_distance
+        obj_index = None
+
+        for index, obstacle in enumerate(obstacles):
+            obstacle_in_way = self.point_on_line(
+                obstacle.pos, self.pos, max_point)
+            scal_proj_dist_to_obs = self.pos.distance_to(obstacle_in_way)
+            scal_proj_dist_to_obs -= obstacle.radius
+            in_radius = obstacle_in_way.distance_to(
+                obstacle.pos) < self.radius + obstacle.radius
+            angle = -90 < self.vel.angle_to(obstacle.pos - self.pos) < 90
+            if scal_proj_dist_to_obs < closest and in_radius and angle:
+                closest = scal_proj_dist_to_obs
+                obj_index = index
+
+        if draw:
+            if obj_index == None:
+                colour = self.colour
+            else:
+                colour = (255, 0, 0)
+
+            point_r1 = Vector2(self.vel)
+            point_r1.rotate_ip(90)
+            point_r1.scale_to_length(self.radius)
+            point_r1 += self.pos
+            point_r1 = (int(point_r1.x), int(point_r1.y))
+
+            point_l1 = Vector2(self.vel)
+            point_l1.rotate_ip(270)
+            point_l1.scale_to_length(self.radius)
+            point_l1 += self.pos
+            point_l1 = (int(point_l1.x), int(point_l1.y))
+
+            point_r2 = Vector2(self.vel)
+            point_r2.scale_to_length(self.radius)
+            point_r2.rotate_ip(90)
+            point_r2 += max_point
+            point_r2 = (int(point_r2.x), int(point_r2.y))
+
+            point_l2 = Vector2(self.vel)
+            point_l2.rotate_ip(270)
+            point_l2.scale_to_length(self.radius)
+            point_l2 += max_point
+            point_l2 = (int(point_l2.x), int(point_l2.y))
+
+            points = [point_l1, point_r1, point_r2, point_l2]
+            pygame.draw.aalines(self.screen, colour, True, points)
+
+        forward = Vector2(self.vel)
+        forward.scale_to_length(self.max_spd)
+        if obj_index == None:
+            return forward
+        # else:
+        #     return self.flee(obstacles[obj_index].pos)
+        
+        else:
+            obstacles[obj_index].colour = (255, 0, 0)
+            obstacle = obstacles[obj_index].pos
+            angle = self.vel.angle_to(obstacle - self.pos)
+            print(angle)
+            desired = Vector2(self.vel)
+            desired.scale_to_length(self.max_spd)
+            desired.rotate_ip(360 - angle)
+
+            # pygame.draw.aaline(self.screen, self.)
+            return desired - self.vel
 
     def follow_field(self, flowfield):
         return NotImplementedError()
