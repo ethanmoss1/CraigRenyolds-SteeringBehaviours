@@ -39,8 +39,13 @@ attacker = Vehicle(screen, WIDTH / 2, HEIGHT / 2)
 target = Vehicle(screen, WIDTH / 4, HEIGHT / 4)
 
 obs = []
-for _ in range(10):
-    obs.append(Obstacles(randint(200,WIDTH - 200),randint(200,HEIGHT - 200), randint(10,100)))
+obs.append(Obstacles(0, 0, 300))
+obs.append(Obstacles(0, HEIGHT, 300))
+obs.append(Obstacles(WIDTH, 0, 300))
+obs.append(Obstacles(WIDTH, HEIGHT, 300))
+
+obs.append(Obstacles(WIDTH / 2, HEIGHT / 2, 300))
+
 
 
 # attacker.get_vector(test)
@@ -51,13 +56,13 @@ while running:
     # YOUR CODE HERE:
 
     steering = pygame.Vector2(0)
-    # steering += target.wander()
+    steering += target.wander()
     steering += target.obstacle_avoidence(obs, True)
     target.update(steering)
-    
+
     for ob in obs:
         ob.draw(screen)
-        ob.colour = (255,255,255)
+        ob.colour = (255, 255, 255)
 
     ###########################################################################
     pygame.display.flip()

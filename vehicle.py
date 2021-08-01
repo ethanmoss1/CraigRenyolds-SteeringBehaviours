@@ -105,7 +105,7 @@ class Vehicle():
 
         if wrap_around:
             self.wrap_around()
-        self.draw(acceleration=True)  # velocity=True, acceleration=True)
+        self.draw(acceleration=True, slowing_field=True)  # velocity=True, acceleration=True)
 
     def get_vector_pos(self, obj):
         """Return a Vector if given Vector or Vehicle Position"""
@@ -313,25 +313,33 @@ class Vehicle():
 
     def obstacle_avoidence(self, obstacles, draw=False):
         if not isinstance(obstacles, Obstacles) and not isinstance(obstacles, list):
-            raise TypeError("Expected Obstacal Object or list of Obstacles")
+            raise TypeError("Expected Obstacale Object or list of Obstacles")
         elif isinstance(obstacles, Obstacles):
             obstacles = [obstacles]
 
         max_point = Vector2(self.vel)
-        max_point.scale_to_length(self.slowing_distance + self.radius * 2)
+        max_point.scale_to_length(self.slowing_distance + (self.radius * 2))
         max_point += self.pos
-
         closest = self.slowing_distance
         obj_index = None
 
-        for index, obstacle in enumerate(obstacles):
+        for index, obstacle in enumerate(obstacles):   
+            # find normal on line from object
             obstacle_in_way = self.point_on_line(
                 obstacle.pos, self.pos, max_point)
+
+            # get distance to that object normal point
             scal_proj_dist_to_obs = self.pos.distance_to(obstacle_in_way)
+
+            # take away the radius to find how close i am.
             scal_proj_dist_to_obs -= obstacle.radius
+
+            # 
             in_radius = obstacle_in_way.distance_to(
                 obstacle.pos) < self.radius + obstacle.radius
+
             angle = -90 < self.vel.angle_to(obstacle.pos - self.pos) < 90
+
             if scal_proj_dist_to_obs < closest and in_radius and angle:
                 closest = scal_proj_dist_to_obs
                 obj_index = index
@@ -377,16 +385,25 @@ class Vehicle():
         #     return self.flee(obstacles[obj_index].pos)
         
         else:
-            obstacles[obj_index].colour = (255, 0, 0)
-            obstacle = obstacles[obj_index].pos
-            angle = self.vel.angle_to(obstacle - self.pos)
-            print(angle)
-            desired = Vector2(self.vel)
-            desired.scale_to_length(self.max_spd)
-            desired.rotate_ip(360 - angle)
+            obstacle = obstacles[obj_index]
+            obstacle.colour = (255, 0, 0)
+
+            scalar = self.point_on_line(obstacle.pos, self.pos, max_point)
+            var =  obstacle.radius - obstacle.pos.distance_to(scalar)
+            print(var)
+            scalar_int = [int(scalar.x), int(scalar.y)]
+            pygame.draw.circle(self.screen, self.colour, scalar_int, 6,1)
+
+
+            # angle = self.vel.angle_to(obstacle - self.pos)
+            # desired = Vector2(self.vel)
+            # desired.scale_to_length(self.max_spd)
+            # desired.rotate_ip(360 - angle)
+            # pygame.draw.aaline(self.screen, (0,0,255), self.pos, self.pos + desired)
 
             # pygame.draw.aaline(self.screen, self.)
-            return desired - self.vel
+            # return desired - self.vel
+            return forward
 
     def follow_field(self, flowfield):
         return NotImplementedError()
